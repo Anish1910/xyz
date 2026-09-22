@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext';
 import { getImage } from '../lib/image';
 import { productPath } from '../lib/productUrl';
 import { whatsappLink } from '../constants/site';
+import { isOnlineCheckout, whatsappOrderLink } from '../constants/checkout';
 
 export default function Cart({ isOpen, onClose }) {
   const { cartItems, removeFromCart, getTotalPrice, clearCart } = useCart();
@@ -12,6 +13,14 @@ export default function Cart({ isOpen, onClose }) {
 
   const handleCheckout = () => {
     if (cartItems.length === 0) return;
+    if (!isOnlineCheckout) {
+      // Online payment isn't live yet — hand the order to WhatsApp, as before.
+      // The cart is deliberately NOT cleared: the popup can be blocked or the
+      // buyer can change their mind, and losing the basket is unrecoverable.
+      window.open(whatsappOrderLink(cartItems, total), '_blank', 'noopener');
+      onClose();
+      return;
+    }
     onClose();
     navigate('/checkout');
   };
@@ -106,7 +115,9 @@ export default function Cart({ isOpen, onClose }) {
           )}
           {cartItems.length > 0 && (
             <p className="text-xs text-accent-brown mt-4">
-              One of one — a piece is only yours once you pay.
+              {isOnlineCheckout
+                ? 'One of one — a piece is only yours once you pay.'
+                : 'One of one — not reserved until you confirm on WhatsApp.'}
             </p>
           )}
         </div>
@@ -121,10 +132,11 @@ export default function Cart({ isOpen, onClose }) {
               onClick={handleCheckout}
               className="w-full px-4 py-3 bg-accent-brown text-white font-semibold rounded-minimal hover:bg-accent-green transition-colors duration-300 shadow-soft uppercase tracking-wide text-sm"
             >
-              Checkout
+              {isOnlineCheckout ? 'Checkout' : 'Confirm on WhatsApp'}
             </button>
 
             <p className="text-xs text-text-light text-center leading-relaxed">
+              {!isOnlineCheckout && <>We reply in minutes during the day.<br /></>}
               <b className="text-text-medium">All sales final</b> · no returns or exchanges ·{' '}
               <Link to="/policies/refund" onClick={onClose} className="underline underline-offset-2 hover:text-accent-brown">policy</Link>
               <br />

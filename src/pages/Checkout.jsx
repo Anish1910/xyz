@@ -6,6 +6,7 @@ import { productPath } from '../lib/productUrl';
 import { invalidateProducts } from '../lib/productCache';
 import { startCashfreeCheckout } from '../lib/cashfreeCheckout';
 import { whatsappLink } from '../constants/site';
+import { isOnlineCheckout, whatsappOrderLink } from '../constants/checkout';
 import { INDIAN_STATES } from '../constants/indianStates';
 import { BUSINESS } from '../content/policies';
 import { useDocumentMeta } from '../hooks/useDocumentMeta';
@@ -71,6 +72,45 @@ export default function Checkout() {
     setForm((f) => ({ ...f, [k]: v }));
     if (errors[k]) setErrors((x) => ({ ...x, [k]: undefined }));
   };
+
+  // Online payment isn't switched on yet: this page just hands over to WhatsApp.
+  if (!isOnlineCheckout && cartItems.length > 0) {
+    return (
+      <main className="min-h-[70vh] bg-neutral-white px-4 py-20 md:py-24">
+        <div className="mx-auto max-w-md text-center">
+          <h1 className="mb-3 text-2xl font-extrabold uppercase tracking-wide text-text-dark md:text-3xl">
+            Claim on WhatsApp
+          </h1>
+          <p className="mb-8 text-text-medium">
+            We take orders on WhatsApp for now. Tap below and your pieces come through as a message —
+            we'll confirm availability, take your address and share payment details there.
+          </p>
+          <ul className="mb-8 divide-y divide-neutral-light-beige rounded-lg border border-neutral-light-beige text-left text-sm">
+            {cartItems.map((item) => (
+              <li key={item._id} className="flex items-center gap-3 px-4 py-3">
+                <img src={getImage(item.images?.[0], { width: 140, quality: 75 })} alt="" className="h-12 w-12 rounded-minimal bg-neutral-warm-beige object-cover" loading="lazy" />
+                <span className="min-w-0 flex-1 truncate text-text-dark">{item.title?.trim()}</span>
+                <b className="text-accent-brown">₹{item.price}</b>
+              </li>
+            ))}
+            <li className="flex justify-between px-4 py-3 font-bold"><span>Total</span><span>₹{total}</span></li>
+          </ul>
+          <a
+            href={whatsappOrderLink(cartItems, total)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block w-full rounded-lg bg-accent-brown px-8 py-4 text-sm font-semibold uppercase tracking-wide text-white shadow-soft hover:bg-text-dark"
+          >
+            Confirm on WhatsApp
+          </a>
+          <p className="mt-4 text-xs leading-relaxed text-text-light">
+            One of one — not reserved until you confirm.{' '}
+            <Link to="/policies/refund" className="underline underline-offset-2">All sales final</Link>.
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   if (cartItems.length === 0 && !paying) {
     return (

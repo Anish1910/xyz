@@ -1,4 +1,5 @@
 import { SITE } from '../constants/site.js';
+import { isOnlineCheckout } from '../constants/checkout.js';
 
 /**
  * Store policies: Refund, Terms, Privacy.
@@ -121,8 +122,12 @@ export const POLICIES = {
         heading: 'Prices and payment',
         list: [
           'All prices are in Indian Rupees (INR) and include applicable taxes unless shown otherwise. Shipping charges, if any, are shown before you pay.',
-          `Payments are processed securely by ${B.paymentGateway}. We never see or store your card, UPI or bank details.`,
-          'An order is confirmed only once payment succeeds. Adding a piece to your cart does not reserve it.',
+          isOnlineCheckout
+            ? `Payments are processed securely by ${B.paymentGateway}. We never see or store your card, UPI or bank details.`
+            : 'Orders are placed over WhatsApp: we confirm the piece is still available and share payment details there. We will never ask for your card number, UPI PIN, OTP or any password.',
+          isOnlineCheckout
+            ? 'An order is confirmed only once payment succeeds. Adding a piece to your cart does not reserve it.'
+            : 'An order is confirmed only once payment reaches us. Adding a piece to your cart, or messaging us about it, does not reserve it.',
           'If two customers pay for the same piece at the same time, the first successful payment gets it and the other is refunded in full.',
           'If a price is shown incorrectly because of an obvious error, we may cancel the order and refund you in full.',
         ],
@@ -203,7 +208,9 @@ export const POLICIES = {
           'Order details: your name, phone number, email, shipping address and what you bought.',
           'Messages you send us on WhatsApp, email or Instagram.',
           'Your email address, if you join our newsletter.',
-          'Payment status from our payment gateway: whether it succeeded, the amount and a transaction ID. We never receive your card, UPI PIN or bank login.',
+          isOnlineCheckout
+            ? 'Payment status from our payment gateway: whether it succeeded, the amount and a transaction ID. We never receive your card, UPI PIN or bank login.'
+            : 'Proof of payment you send us, such as a UPI reference number or a screenshot. We never receive your card details, UPI PIN or bank login.',
           'Basic technical data such as browser type and pages visited, collected by our hosting provider to keep the site running and secure.',
         ],
       },
@@ -220,10 +227,12 @@ export const POLICIES = {
         heading: 'Who we share it with',
         body: ['We share only what each service needs to do its job:'],
         list: [
-          `${B.paymentGateway} — to process payments.`,
+          ...(isOnlineCheckout ? [`${B.paymentGateway} — to process payments.`] : []),
           `${B.courier} — your name, address and phone number, to deliver your parcel.`,
           'Vercel — hosts this website.',
-          'Sanity — stores our product catalogue and your order record, in a private area that is not publicly accessible.',
+          isOnlineCheckout
+            ? 'Sanity — stores our product catalogue and your order record, in a private area that is not publicly accessible.'
+            : 'Sanity — stores our product catalogue (it holds no customer details while orders run on WhatsApp).',
           'Google (Gmail) — sends order confirmations and replies to your emails.',
           'Brevo — sends our newsletter, only if you sign up.',
           'WhatsApp (Meta) — if you choose to message us there.',
