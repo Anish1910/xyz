@@ -9,7 +9,7 @@ import Footer from '../components/Footer';
 import ScrollVelocity from '../components/ScrollVelocity';
 import Newsletter from '../components/Newsletter';
 
-import { client, urlFor } from '../lib/sanity';
+import { client, urlFor, CARD_FIELDS } from '../lib/sanity';
 import { useDocumentMeta, SITE_URL } from '../hooks/useDocumentMeta';
 
 export default function Home() {
@@ -55,7 +55,7 @@ export default function Home() {
         heroImages,
         heroText,
         scrollingTexts,
-        featuredProducts[]->{_id, title, slug, price, images, description, badges[]->{name}, tags, status, gender, hoverGif, category->{name, slug}, longDescription, whyThisPiece},
+        featuredProducts[]->{ ${CARD_FIELDS} },
         featuredCategories[]->{_id, name, slug, image, description},
         brandSections[]{image, link, text}
       }`)

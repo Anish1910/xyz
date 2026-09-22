@@ -54,6 +54,12 @@ export const CartProvider = ({ children }) => {
     return cartItems.reduce((total, item) => total + item.price, 0);
   };
 
+  // Drawer visibility lives here so any page (e.g. "Add to cart" on the product
+  // page) can open it, not just the header icon.
+  const [isCartOpen, setCartOpen] = useState(false);
+
+  const isInCart = (productId) => cartItems.some(item => item._id === productId);
+
   const getTotalItems = () => {
     return cartItems.length;
   };
@@ -65,7 +71,10 @@ export const CartProvider = ({ children }) => {
       removeFromCart,
       clearCart,
       getTotalPrice,
-      getTotalItems
+      getTotalItems,
+      isInCart,
+      isCartOpen,
+      setCartOpen
     }}>
       {children}
     </CartContext.Provider>

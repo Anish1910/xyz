@@ -52,12 +52,12 @@ p {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #8B7355;
+  background: #856E52;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #7A9B7E;
+  background: #5E7761;
 }
 
 /* Utility Classes */
@@ -99,7 +99,7 @@ a:hover {
 
 /* Selection */
 ::selection {
-  background-color: #8B7355;
+  background-color: #856E52;
   color: white;
 }
 
@@ -107,7 +107,7 @@ a:hover {
 button:focus-visible,
 a:focus-visible,
 input:focus-visible {
-  outline: 2px solid #8B7355;
+  outline: 2px solid #856E52;
   outline-offset: 2px;
 }
 
@@ -182,11 +182,11 @@ a:focus {
     background: rgba(255, 255, 255, 0.75);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(139, 115, 85, 0.15);
+    border: 1px solid rgba(133, 110, 82, 0.15);
     border-radius: 16px;
     padding: 1.25rem 0.85rem;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06),
-                0 1px 4px rgba(139, 115, 85, 0.08);
+                0 1px 4px rgba(133, 110, 82, 0.08);
     /* Center the block content */
     align-items: center;
     text-align: center;
@@ -240,3 +240,14 @@ a:focus {
     content-visibility: auto;
   }
 }
+
+/* ---- Product card photo strip (CardCarousel) ---- */
+.card-track { scrollbar-width: none; -ms-overflow-style: none; overscroll-behavior-x: contain; }
+.card-track::-webkit-scrollbar { display: none; }
+/* Arrows only for mouse users, only while hovering the photo. */
+.card-nav { display: none; }
+@media (hover: hover) and (pointer: fine) {
+  .group\/car:hover .card-nav { display: flex; }
+}
+.group\/car:focus-within .card-nav { display: flex; }
+a:focus-visible .card-nav { display: flex; }

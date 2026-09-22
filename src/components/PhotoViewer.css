@@ -1,0 +1,68 @@
+/* Full-screen photo viewer. Opaque backdrop on purpose: a translucent one let
+   the page show through behind a zoomed photo and read as a glitch. */
+.pv {
+  position: fixed; inset: 0; z-index: 120;
+  background: #151410; color: #fff;
+  display: flex; flex-direction: column;
+  animation: pv-in .18s ease-out;
+}
+@keyframes pv-in { from { opacity: 0 } to { opacity: 1 } }
+.pv-top { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; flex-shrink: 0; }
+.pv-count { font-size: .8125rem; font-weight: 700; letter-spacing: .1em; font-variant-numeric: tabular-nums; padding-left: 6px; }
+.pv-tools { display: flex; gap: 8px; }
+.pv-btn {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.1); color: #fff; transition: background .15s;
+}
+.pv-btn:hover { background: rgba(255,255,255,.18); }
+.pv-btn:focus-visible, .pv-arrow:focus-visible, .pv-go:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+/* touch-action:none hands every gesture to our handlers so the browser's own
+   page zoom never fires while someone pinches a photo. */
+.pv-stage {
+  position: relative; flex: 1; overflow: hidden;
+  touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab;
+}
+.pv-stage.pv-zoomed { cursor: move; }
+.pv-track { display: flex; height: 100%; will-change: transform; }
+.pv-slide { flex: 0 0 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.pv-slide img {
+  max-width: 100%; max-height: 100%; object-fit: contain;
+  will-change: transform; pointer-events: none; -webkit-user-drag: none;
+}
+.pv-arrow {
+  position: absolute; top: 50%; transform: translateY(-50%); z-index: 2;
+  width: 48px; height: 48px; border-radius: 50%;
+  background: rgba(255,255,255,.14); color: #fff;
+  display: none; align-items: center; justify-content: center;
+}
+.pv-arrow:hover { background: rgba(255,255,255,.26); }
+.pv-arrow[disabled] { opacity: .25; cursor: default; }
+.pv-arrow.pv-prev { left: 16px; }
+.pv-arrow.pv-next { right: 16px; }
+@media (hover: hover) { .pv-arrow { display: flex; } }
+
+.pv-dots { position: absolute; left: 0; right: 0; bottom: 12px; display: flex; justify-content: center; gap: 6px; z-index: 2; pointer-events: none; }
+.pv-dots i { width: 6px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.35); transition: all .2s; }
+.pv-dots i.on { background: #fff; width: 18px; }
+.pv-hint {
+  position: absolute; left: 50%; top: 14px; transform: translateX(-50%);
+  font-size: .6875rem; letter-spacing: .06em; white-space: nowrap;
+  background: rgba(255,255,255,.12); padding: 5px 10px; border-radius: 99px;
+  opacity: 0; transition: opacity .4s; pointer-events: none;
+}
+.pv-hint.show { opacity: 1; }
+
+.pv-foot {
+  display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+  padding: 12px 16px calc(14px + env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(255,255,255,.1);
+}
+.pv-foot-text { flex: 1; min-width: 0; }
+.pv-foot-text b { display: block; font-size: .9375rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pv-foot-text span { font-size: .8125rem; opacity: .72; }
+.pv-go {
+  padding: .75rem 1.125rem; border-radius: 8px; background: #fff; color: #2C2C2C;
+  font-size: .75rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; white-space: nowrap;
+}

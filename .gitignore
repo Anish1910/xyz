@@ -57,3 +57,6 @@ debug/
 
 # Temporary Scratch Files
 scratch/
+
+# Claude working files (tarballs, scratch)
+Claude outputs/

@@ -6,8 +6,9 @@ import ShopFilters from '../components/ShopFilters';
 import ProductGrid from '../components/ProductGrid';
 import Footer from '../components/Footer';
 import { ProductGridSkeleton } from '../components/Skeletons';
-import { client } from '../lib/sanity';
+import { client, CARD_FIELDS } from '../lib/sanity';
 import { useDocumentMeta } from '../hooks/useDocumentMeta';
+import { normaliseSize, sortSizes } from '../lib/productDetails';
 import {
   getCachedProducts,
   setCachedProducts,
@@ -21,6 +22,9 @@ export default function Shop() {
   const categoryParams = searchParams.getAll('category');
   const genderParam = searchParams.get('gender');
   const badgeParams = searchParams.getAll('badge');
+  const queryParam = (searchParams.get('q') || '').trim();
+  const sizeParam = searchParams.get('size') || '';
+  const sortParam = searchParams.get('sort') || '';
   const productGridRef = useRef(null);
 
   // Fetch shop settings (title, subtitle, background)
@@ -67,18 +71,7 @@ export default function Shop() {
     client
       // Only the fields the grid and filters actually read — the old `...`
       // spread pulled every field of every product, longDescription included.
-      .fetch(`*[_type == "product"] | order(status asc, _createdAt desc) {
-        _id,
-        title,
-        slug,
-        price,
-        status,
-        gender,
-        "images": images[0...2],
-        hoverGif,
-        badges[]->{ name },
-        category->{ name, slug }
-      }`)
+      .fetch(`*[_type == "product"] | order(status asc, _createdAt desc) { ${CARD_FIELDS} }`)
       .then((data) => {
         if (cancelled) return;
         const list = data || [];
@@ -108,6 +101,11 @@ export default function Shop() {
   }, [loading]);
 
   // Derive unique badge names from fetched products
+  // Sizes actually in stock, in a sensible order (XS…XXL, then numbers).
+  const uniqueSizes = sortSizes([
+    ...new Set(products.filter((p) => p.status !== 'sold_out').map((p) => normaliseSize(p.tagSize)).filter(Boolean)),
+  ]);
+
   const uniqueBadges = [...new Set(products.flatMap(p => p.badges?.map(b => b.name) || []).filter(Boolean))].sort();
 
   // Filter products by category, gender, and badge
@@ -131,14 +129,45 @@ export default function Shop() {
     );
   }
 
-  const hasActiveFilter = categoryParams.length > 0 || genderParam || badgeParams.length > 0;
+  if (sizeParam) {
+    filteredProducts = filteredProducts.filter((p) => normaliseSize(p.tagSize) === sizeParam);
+  }
+
+  if (queryParam) {
+    // Every word has to match somewhere, so "levis 32" narrows instead of widening.
+    const words = queryParam.toLowerCase().split(/\s+/).filter(Boolean);
+    filteredProducts = filteredProducts.filter((p) => {
+      const haystack = [
+        p.title, p.brand, p.category?.name, p.tagSize, p.era, p.fabric, p.gender,
+        ...(p.tags || []), ...(p.badges || []).map((b) => b.name),
+      ].filter(Boolean).join(' ').toLowerCase().replace(/[’']/g, '');
+      return words.every((w) => haystack.includes(w.replace(/[’']/g, '')));
+    });
+  }
+
+  if (sortParam === 'price-asc' || sortParam === 'price-desc') {
+    const dir = sortParam === 'price-asc' ? 1 : -1;
+    // Sold pieces stay at the end whatever the sort — they can't be bought.
+    filteredProducts = [...filteredProducts].sort((a, b) => {
+      const soldA = a.status === 'sold_out' ? 1 : 0;
+      const soldB = b.status === 'sold_out' ? 1 : 0;
+      if (soldA !== soldB) return soldA - soldB;
+      return dir * ((a.price || 0) - (b.price || 0));
+    });
+  }
+
+  const hasActiveFilter = categoryParams.length > 0 || genderParam || badgeParams.length > 0
+    || !!sizeParam || !!queryParam;
+  const availableCount = products.filter((p) => p.status !== 'sold_out').length;
+  const shownAvailable = filteredProducts.filter((p) => p.status !== 'sold_out').length;
+  const shownSold = filteredProducts.length - shownAvailable;
 
   // A single-category view is a genuine landing page ("vintage cargos") and is
   // listed in the sitemap, so it gets its own title and canonical. Every other
   // combination of filters is a near-duplicate of /shop and points its canonical
   // back there, so the variants don't compete with each other in the index.
   const isSingleCategoryView =
-    categoryParams.length === 1 && !genderParam && badgeParams.length === 0;
+    categoryParams.length === 1 && !genderParam && badgeParams.length === 0 && !sizeParam && !queryParam;
 
   const soleCategoryName = isSingleCategoryView
     ? categories.find((c) => c.slug?.current === categoryParams[0])?.name ||
@@ -172,6 +201,8 @@ export default function Shop() {
   if (badgeParams.length > 0) {
     activeFilterParts.push(badgeParams.join(', '));
   }
+  if (sizeParam) activeFilterParts.push(`Size ${sizeParam}`);
+  if (queryParam) activeFilterParts.push(`“${queryParam}”`);
   const displayFilterName = activeFilterParts.join(' · ');
 
   // Smooth scroll to product grid when filter changes
@@ -201,7 +232,7 @@ export default function Shop() {
 
       {/* Filter bar with spacing */}
       <div className="shop-filter-wrapper mt-2 md:mt-3">
-        <ShopFilters categories={categories} badges={uniqueBadges} />
+        <ShopFilters categories={categories} badges={uniqueBadges} sizes={uniqueSizes} />
       </div>
 
       {/* Active filter UI */}
@@ -267,9 +298,13 @@ export default function Shop() {
               initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-sm text-text-light italic tracking-wide border-l-2 border-accent-brown/40 pl-3 mb-0"
+              className="text-sm text-text-light italic tracking-wide border-l-2 border-accent-brown/40 pl-3 mb-0 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1"
             >
-              Limited pieces. Once gone, gone.
+              <span>Limited pieces. Once gone, gone.</span>
+              <span className="not-italic text-xs uppercase tracking-[0.12em] text-text-medium" aria-live="polite">
+                {shownAvailable} {shownAvailable === 1 ? 'piece' : 'pieces'}
+                {shownSold > 0 && <span className="text-text-light"> · {shownSold} sold</span>}
+              </span>
             </motion.p>
           </div>
 
@@ -277,16 +312,25 @@ export default function Shop() {
           <ProductGrid products={filteredProducts} showHeading={false} />
         </motion.div>
       ) : (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-          <div className="text-center">
-            <p className="text-xl text-text-medium mb-6">
-              No products found{displayFilterName ? ` for ${displayFilterName}` : ''}.
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-24">
+          <div className="text-center max-w-md mx-auto flex flex-col items-center">
+            <svg width="44" height="44" viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="text-text-light mb-5" aria-hidden="true">
+              <path d="M17 8 L9 12 L6 24 L12 26 L14 21 L14 41 L34 41 L34 21 L36 26 L42 24 L39 12 L31 8 C28 13 20 13 17 8 Z" />
+              <path d="M19 26l10 10M29 26l-10 10" />
+            </svg>
+            <h2 className="text-xl md:text-2xl font-extrabold text-text-dark uppercase tracking-wide mb-3">
+              Nothing matches that
+            </h2>
+            <p className="text-text-medium mb-7">
+              {displayFilterName ? <>No pieces for <b className="text-text-dark">{displayFilterName}</b> right now. </> : null}
+              Every piece is one of one, so sizes and styles come and go.
+              There {availableCount === 1 ? 'is' : 'are'} {availableCount} {availableCount === 1 ? 'piece' : 'pieces'} in the shop right now.
             </p>
             <Link
               to="/shop"
               className="inline-block px-8 py-4 bg-accent-brown text-white font-semibold rounded-minimal hover:bg-accent-green transition-colors duration-300 uppercase tracking-wide text-sm"
             >
-              View All Products
+              Clear filters
             </Link>
           </div>
         </div>

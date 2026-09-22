@@ -1,7 +1,70 @@
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
-export default function ShopFilters({ categories = [], badges = [] }) {
+export const SORT_OPTIONS = [
+  { value: '', label: 'Newest first' },
+  { value: 'price-asc', label: 'Price: low to high' },
+  { value: 'price-desc', label: 'Price: high to low' },
+];
+
+/**
+ * Search box + sort select. Both live in the URL (?q=, ?sort=) so a filtered
+ * view can be shared and survives the back button.
+ */
+function SearchSort() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlQ = searchParams.get('q') || '';
+  const sort = searchParams.get('sort') || '';
+  const [q, setQ] = useState(urlQ);
+  const timer = useRef(null);
+
+  // Keep the box in sync when the URL changes from elsewhere (Clear all, back button).
+  useEffect(() => { setQ(urlQ); }, [urlQ]);
+  useEffect(() => () => clearTimeout(timer.current), []);
+
+  const update = (key, value) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (value) next.set(key, value); else next.delete(key);
+      return next;
+    }, { replace: true });
+  };
+
+  const onType = (value) => {
+    setQ(value);
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => update('q', value.trim()), 200);
+  };
+
+  return (
+    <div className="flex gap-2 md:gap-3 mb-3 md:mb-5">
+      <label className="relative flex-1 min-w-0">
+        <span className="sr-only">Search pieces</span>
+        <svg className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M16.5 16.5L21 21" /></svg>
+        <input
+          type="search"
+          value={q}
+          onChange={(e) => onType(e.target.value)}
+          placeholder="Search brand, style, size…"
+          enterKeyHint="search"
+          className="w-full rounded-minimal border border-neutral-light-beige bg-neutral-white py-2.5 pl-9 pr-3 text-sm text-text-dark placeholder:text-text-light focus:border-accent-brown focus:outline-none"
+        />
+      </label>
+      <label className="flex-shrink-0">
+        <span className="sr-only">Sort by</span>
+        <select
+          value={sort}
+          onChange={(e) => update('sort', e.target.value)}
+          className="h-full rounded-minimal border border-neutral-light-beige bg-neutral-white px-2.5 md:px-3 text-sm text-text-dark focus:border-accent-brown focus:outline-none"
+        >
+          {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+      </label>
+    </div>
+  );
+}
+
+export default function ShopFilters({ categories = [], badges = [], sizes = [] }) {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -13,10 +76,14 @@ export default function ShopFilters({ categories = [], badges = [] }) {
   const isAllCategoriesSelected = selectedCategories.length === 0;
   const isAllGenderSelected = !selectedGender;
   const isAllBadgesSelected = selectedBadges.length === 0;
+  const selectedSize = searchParams.get('size') || '';
 
-  // Build URL with combined params
+  // Build URL with combined params. Search, sort and size ride along untouched.
   const buildUrl = (newCategories, newGender, newBadges) => {
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(searchParams);
+    params.delete('category');
+    params.delete('gender');
+    params.delete('badge');
     (newCategories || []).forEach((cat) => params.append('category', cat));
     if (newGender) params.set('gender', newGender);
     (newBadges || []).forEach((b) => params.append('badge', b));
@@ -52,16 +119,52 @@ export default function ShopFilters({ categories = [], badges = [] }) {
     navigate(buildUrl(selectedCategories, selectedGender, newBadges));
   };
 
+  // Size is single-select: tapping the active size clears it.
+  const sizeUrl = (size) => {
+    const params = new URLSearchParams(searchParams);
+    if (size && size !== selectedSize) params.set('size', size); else params.delete('size');
+    const qs = params.toString();
+    return qs ? `/shop?${qs}` : '/shop';
+  };
+
   // Clear all filters
   const handleClearAll = () => {
     navigate('/shop');
   };
 
-  const hasActiveFilters = !isAllCategoriesSelected || !isAllGenderSelected || !isAllBadgesSelected;
+  const hasActiveFilters = !isAllCategoriesSelected || !isAllGenderSelected || !isAllBadgesSelected
+    || !!selectedSize || !!searchParams.get('q');
+
+  const sizeChips = (compact) => sizes.length > 0 && (
+    <div>
+      <p className={`text-[10px] text-text-light uppercase tracking-[0.2em] ${compact ? 'mb-2' : 'mb-3'} font-semibold`}>{compact ? 'Size' : 'SIZE'}</p>
+      <div className="flex flex-wrap gap-2">
+        {sizes.map((size) => {
+          const isSelected = selectedSize === size;
+          return (
+            <button
+              key={size}
+              onClick={() => navigate(sizeUrl(size), { replace: true })}
+              aria-pressed={isSelected}
+              className={`${compact ? 'px-3.5 py-1.5 text-xs' : 'px-4 py-2 text-sm'} rounded-full font-medium uppercase transition-all duration-200 flex items-center gap-1.5 ${
+                isSelected
+                  ? 'bg-accent-brown text-white shadow-soft'
+                  : compact ? 'text-text-dark bg-neutral-white/70 hover:bg-neutral-white' : 'text-text-dark hover:bg-neutral-white/60'
+              }`}
+            >
+              {size}
+              {isSelected && <span className="text-xs opacity-80">✕</span>}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
 
   return (
     <div className="bg-neutral-warm-beige/40 border-b border-neutral-warm-beige">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-5 md:pt-4 md:pb-6">
+        <SearchSort />
 
         {/* ===== DESKTOP: stacked layout (hidden below md) ===== */}
         <div className="hidden md:block">
@@ -130,6 +233,9 @@ export default function ShopFilters({ categories = [], badges = [] }) {
                 })}
               </div>
             </div>
+
+            {/* Size Filter */}
+            {sizeChips(false)}
 
             {/* Badge Filter */}
             {badges.length > 0 && (
@@ -219,7 +325,7 @@ export default function ShopFilters({ categories = [], badges = [] }) {
           <div
             className="overflow-hidden transition-all duration-300 ease-in-out"
             style={{
-              maxHeight: mobileOpen ? '600px' : '0px',
+              maxHeight: mobileOpen ? '1000px' : '0px',
               opacity: mobileOpen ? 1 : 0,
             }}
           >
@@ -287,6 +393,9 @@ export default function ShopFilters({ categories = [], badges = [] }) {
                   })}
                 </div>
               </div>
+
+              {/* Size */}
+              {sizeChips(true)}
 
               {/* Badge */}
               {badges.length > 0 && (

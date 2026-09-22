@@ -59,6 +59,72 @@ export default {
         hotspot: true,
       }
     },
+    // ---- Listing details shown on the product page ------------------------
+    // All optional so existing products keep publishing; fill them in as you
+    // re-list. Measurements, condition and flaws are what make the "not as
+    // described" refund rule fair to both sides, so they are worth the minute.
+    {
+      name: 'tagSize',
+      title: 'Tag size',
+      type: 'string',
+      description: 'Exactly what the label says, e.g. M, 32, 34W 32L. Powers the size filter in the shop.',
+    },
+    {
+      name: 'measurements',
+      title: 'Measurements (inches, garment laid flat)',
+      type: 'object',
+      description: 'Fill only what applies. Tops: chest, length, shoulder, sleeve. Bottoms: waist, inseam, rise, leg opening, hip.',
+      options: { collapsible: true, collapsed: false },
+      fields: [
+        { name: 'chest', title: 'Chest (pit to pit)', type: 'number' },
+        { name: 'length', title: 'Length', type: 'number' },
+        { name: 'shoulder', title: 'Shoulder', type: 'number' },
+        { name: 'sleeve', title: 'Sleeve', type: 'number' },
+        { name: 'waist', title: 'Waist', type: 'number' },
+        { name: 'hip', title: 'Hip', type: 'number' },
+        { name: 'inseam', title: 'Inseam', type: 'number' },
+        { name: 'rise', title: 'Rise', type: 'number' },
+        { name: 'legOpening', title: 'Leg opening', type: 'number' },
+      ],
+    },
+    {
+      name: 'condition',
+      title: 'Condition',
+      type: 'string',
+      options: {
+        list: [
+          { title: 'Near new', value: 'near_new' },
+          { title: 'Very good', value: 'very_good' },
+          { title: 'Good', value: 'good' },
+          { title: 'Well-worn', value: 'well_worn' },
+        ],
+        layout: 'radio',
+      },
+    },
+    {
+      name: 'flaws',
+      title: 'Flaws',
+      type: 'array',
+      of: [{ type: 'string' }],
+      description: 'One line per flaw, e.g. "Small mark on left cuff (photo 5)". Leave empty if there are none.',
+    },
+    {
+      name: 'brand',
+      title: 'Brand',
+      type: 'string',
+    },
+    {
+      name: 'fabric',
+      title: 'Fabric',
+      type: 'string',
+      description: 'e.g. 100% cotton denim',
+    },
+    {
+      name: 'era',
+      title: 'Era',
+      type: 'string',
+      description: 'e.g. 90s, Y2K, 2010s',
+    },
     {
       name: 'badges',
       title: 'Badges',

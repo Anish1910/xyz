@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, lazy, Suspense, useTransition } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { CartProvider } from './context/CartContext';
+import { CartProvider, useCart } from './context/CartContext';
+import { PhotoViewerProvider } from './components/PhotoViewer';
 import ErrorBoundary from './components/ErrorBoundary';
 import { clearScroll } from './lib/productCache';
 import Header from './components/Header';
@@ -23,6 +24,9 @@ const About = lazy(() => import('./pages/About'));
 const LearnPage = lazy(() => import('./pages/LearnPage'));
 const Contact = lazy(() => import('./pages/Contact'));
 const NotFound = lazy(() => import('./pages/NotFound'));
+const Policy = lazy(() => import('./pages/Policy'));
+const Checkout = lazy(() => import('./pages/Checkout'));
+const OrderStatus = lazy(() => import('./pages/OrderStatus'));
 
 /**
  * DeferredRoutes — keeps the current page visible while the next route's
@@ -120,6 +124,26 @@ function DeferredRoutes() {
           </Suspense>
         } />
 
+        {/* Checkout (Cashfree) and the page Cashfree sends buyers back to */}
+        <Route path="/checkout" element={
+          <Suspense fallback={null}>
+            <Checkout />
+          </Suspense>
+        } />
+        <Route path="/order/:orderId" element={
+          <Suspense fallback={null}>
+            <OrderStatus />
+          </Suspense>
+        } />
+
+        {/* Refund, Terms and Privacy — required by payment gateways and the
+            Consumer Protection (E-Commerce) Rules 2020 */}
+        <Route path="/policies/:policy" element={
+          <Suspense fallback={null}>
+            <Policy />
+          </Suspense>
+        } />
+
         {/* Anything else gets a real not-found page instead of a blank body */}
         <Route path="*" element={
           <Suspense fallback={null}>
@@ -131,19 +155,26 @@ function DeferredRoutes() {
   );
 }
 
-function App() {
-  const [isCartOpen, setIsCartOpen] = useState(false);
+function Shell() {
+  const { isCartOpen, setCartOpen } = useCart();
+  return (
+    <div className="min-h-screen bg-neutral-white">
+      <Header onCartToggle={() => setCartOpen(!isCartOpen)} />
+      <Cart isOpen={isCartOpen} onClose={() => setCartOpen(false)} />
+      <DeferredRoutes />
+    </div>
+  );
+}
 
+function App() {
   return (
     <ErrorBoundary>
       <CartProvider>
-        <Router>
-          <div className="min-h-screen bg-neutral-white">
-            <Header onCartToggle={() => setIsCartOpen(!isCartOpen)} />
-            <Cart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
-            <DeferredRoutes />
-          </div>
-        </Router>
+        <PhotoViewerProvider>
+          <Router>
+            <Shell />
+          </Router>
+        </PhotoViewerProvider>
       </CartProvider>
     </ErrorBoundary>
   );

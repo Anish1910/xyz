@@ -6,5 +6,6 @@ import learnTip from './learnTip'
 import shopSettings from './shopSettings'
 import badge from './badge'
 import aboutPage from './aboutPage'
+import order from './order'
 
-export const schemaTypes = [product, category, banner, homepageSettings, learnTip, shopSettings, badge, aboutPage]
+export const schemaTypes = [product, category, banner, homepageSettings, learnTip, shopSettings, badge, aboutPage, order]

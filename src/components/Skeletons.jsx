@@ -96,7 +96,7 @@ export function ProductDetailSkeleton() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16">
           {/* Image */}
-          <Block style={{ aspectRatio: '1/1', borderRadius: '8px' }} />
+          <Block style={{ aspectRatio: '4/5', borderRadius: '8px' }} />
 
           {/* Details */}
           <div className="flex flex-col gap-5">

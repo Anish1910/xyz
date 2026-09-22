@@ -71,3 +71,25 @@ export const getImage = (img, options = {}) => {
   // Fallback for unknown types
   return '';
 };
+
+/**
+ * srcset for a Sanity image at fixed widths, so the browser downloads the
+ * smallest file that is still sharp on this screen.
+ *
+ * Keep the widths below in sync with scripts/warm-images.mjs — the CDN caches
+ * each exact URL, and the warm-up script pre-builds these ones.
+ */
+export const IMAGE_WIDTHS = {
+  card: [400, 600, 800],
+  gallery: [600, 900, 1200],
+};
+export const IMAGE_QUALITY = { card: 75, gallery: 80, viewer: 80, thumb: 70 };
+
+export const getSrcSet = (img, widths, quality) =>
+  widths
+    .map((w) => {
+      const url = getImage(img, { width: w, quality, responsive: false });
+      return url ? `${url} ${w}w` : '';
+    })
+    .filter(Boolean)
+    .join(', ');

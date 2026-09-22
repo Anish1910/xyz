@@ -54,9 +54,9 @@
   transform-origin: left;
   background: linear-gradient(
     90deg,
-    #8B7355 0%,
+    #856E52 0%,
     #a08a6a 50%,
-    #8B7355 100%
+    #856E52 100%
   );
   transition: opacity 0.15s ease, transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }

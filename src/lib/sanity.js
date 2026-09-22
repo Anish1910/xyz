@@ -42,6 +42,27 @@ export const urlFor = (source) => {
   }
 };
 
+// Fields every product card needs (grid, home picks, related pieces). All
+// images are fetched — they're only references until the carousel shows them.
+export const CARD_FIELDS = `
+  _id,
+  _createdAt,
+  title,
+  slug,
+  price,
+  status,
+  gender,
+  images,
+  "lqip": images[0].asset->metadata.lqip,
+  badges[]->{ name },
+  category->{ name, slug },
+  tagSize,
+  brand,
+  era,
+  fabric,
+  tags
+`;
+
 // PRODUCT QUERIES
 export const fetchProducts = async () => {
   const query = `*[_type == "product"] | order(status asc, _createdAt desc) {
@@ -58,7 +79,14 @@ export const fetchProducts = async () => {
     status,
     tags,
     whyThisPiece,
-    gender
+    gender,
+    tagSize,
+    measurements,
+    condition,
+    flaws,
+    brand,
+    fabric,
+    era
   }`;
 
   try {
@@ -85,7 +113,14 @@ export const fetchProductBySlug = async (slug) => {
     status,
     tags,
     whyThisPiece,
-    gender
+    gender,
+    tagSize,
+    measurements,
+    condition,
+    flaws,
+    brand,
+    fabric,
+    era
   }`;
 
   try {
@@ -112,7 +147,14 @@ export const fetchProductsByCategory = async (categorySlug) => {
     status,
     tags,
     whyThisPiece,
-    gender
+    gender,
+    tagSize,
+    measurements,
+    condition,
+    flaws,
+    brand,
+    fabric,
+    era
   }`;
 
   try {

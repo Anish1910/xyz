@@ -112,9 +112,26 @@ export default function Footer() {
 
         {/* Bottom bar — copyright + social icons row */}
         <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-neutral-off-white/40">
-            &copy; {CURRENT_YEAR} Thriftonyte. All rights reserved.
-          </p>
+          <div className="flex flex-col md:flex-row items-center gap-3 md:gap-6">
+            <p className="text-xs text-neutral-off-white/40">
+              &copy; {CURRENT_YEAR} Thriftonyte. All rights reserved.
+            </p>
+            <nav aria-label="Store policies" className="flex items-center gap-4">
+              {[
+                { label: 'Refunds', to: '/policies/refund' },
+                { label: 'Terms', to: '/policies/terms' },
+                { label: 'Privacy', to: '/policies/privacy' },
+              ].map(link => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className="text-xs text-neutral-off-white/60 hover:text-accent-brown transition-colors duration-200"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
 
           {/* Social icon row */}
           <div className="flex items-center gap-5">

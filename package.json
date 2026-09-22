@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build && node scripts/generate-sitemap.mjs",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "warm-images": "node scripts/warm-images.mjs"
   },
   "dependencies": {
     "@sanity/client": "^6.29.1",

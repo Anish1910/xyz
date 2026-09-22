@@ -1,22 +1,19 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { getImage } from '../lib/image';
 import { productPath } from '../lib/productUrl';
-import { useWhatsAppCheckout } from '../hooks/useWhatsAppCheckout';
+import { whatsappLink } from '../constants/site';
 
 export default function Cart({ isOpen, onClose }) {
   const { cartItems, removeFromCart, getTotalPrice, clearCart } = useCart();
-  const { sendWhatsAppMessage } = useWhatsAppCheckout();
+  const navigate = useNavigate();
   const total = getTotalPrice();
 
   const handleCheckout = () => {
     if (cartItems.length === 0) return;
-    // Deliberately does NOT clear the cart: the popup can be blocked, WhatsApp
-    // can fail to open, or the buyer can change their mind. Losing the basket
-    // at that point is unrecoverable for them and invisible to us.
-    sendWhatsAppMessage(cartItems, total);
     onClose();
+    navigate('/checkout');
   };
 
   const backdropVariants = {
@@ -56,6 +53,7 @@ export default function Cart({ isOpen, onClose }) {
           <h2 className="text-xl font-extrabold text-text-dark uppercase tracking-wider">Your Picks</h2>
           <button
             onClick={onClose}
+            aria-label="Close cart"
             className="p-2 text-text-medium hover:text-text-dark transition-colors"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -91,6 +89,9 @@ export default function Cart({ isOpen, onClose }) {
                         {item.title?.trim()}
                       </Link>
                     </h3>
+                    {item.tagSize && (
+                      <p className="text-[10px] uppercase tracking-wide text-text-light">Tag {item.tagSize}</p>
+                    )}
                     <p className="text-sm text-text-medium">₹{item.price}</p>
                     <button
                       onClick={() => removeFromCart(item._id)}
@@ -103,9 +104,11 @@ export default function Cart({ isOpen, onClose }) {
               ))}
             </div>
           )}
-          <p className="text-xs text-accent-brown mt-4">
-            Not reserved until you confirm on WhatsApp
-          </p>
+          {cartItems.length > 0 && (
+            <p className="text-xs text-accent-brown mt-4">
+              One of one — a piece is only yours once you pay.
+            </p>
+          )}
         </div>
 
         {cartItems.length > 0 && (
@@ -118,11 +121,17 @@ export default function Cart({ isOpen, onClose }) {
               onClick={handleCheckout}
               className="w-full px-4 py-3 bg-accent-brown text-white font-semibold rounded-minimal hover:bg-accent-green transition-colors duration-300 shadow-soft uppercase tracking-wide text-sm"
             >
-              Confirm on WhatsApp
+              Checkout
             </button>
 
-            <p className="text-xs text-text-light text-center">
-              Confirm details + delivery on WhatsApp
+            <p className="text-xs text-text-light text-center leading-relaxed">
+              <b className="text-text-medium">All sales final</b> · no returns or exchanges ·{' '}
+              <Link to="/policies/refund" onClick={onClose} className="underline underline-offset-2 hover:text-accent-brown">policy</Link>
+              <br />
+              Questions?{' '}
+              <a href={whatsappLink('Hi Thriftonyte! I have a question about my cart.')} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-accent-brown">
+                WhatsApp us
+              </a>
             </p>
             <button
               onClick={() => {

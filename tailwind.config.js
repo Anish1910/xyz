@@ -17,11 +17,11 @@ export default {
         'text': {
           'dark': '#2C2C2C',
           'medium': '#5A5A5A',
-          'light': '#8A8A8A',
+          'light': '#717171',
         },
         'accent': {
-          'brown': '#8B7355',
-          'green': '#7A9B7E',
+          'brown': '#856E52',
+          'green': '#5E7761',
         }
       },
       spacing: {

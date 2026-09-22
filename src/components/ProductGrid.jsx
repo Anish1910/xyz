@@ -39,8 +39,8 @@ export default function ProductGrid({ products, showHeading = true }) {
         whileInView="visible"
         viewport={{ once: true }}
       >
-        {products.map(product => (
-          <ProductCard key={product._id} product={product} />
+        {products.map((product, i) => (
+          <ProductCard key={product._id} product={product} priority={i < 4} />
         ))}
       </motion.div>
     </section>
