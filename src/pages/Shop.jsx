@@ -20,10 +20,10 @@ import {
 export default function Shop() {
   const [searchParams] = useSearchParams();
   const categoryParams = searchParams.getAll('category');
-  const genderParam = searchParams.get('gender');
+  const genderParams = searchParams.getAll('gender');
   const badgeParams = searchParams.getAll('badge');
   const queryParam = (searchParams.get('q') || '').trim();
-  const sizeParam = searchParams.get('size') || '';
+  const sizeParams = searchParams.getAll('size');
   const sortParam = searchParams.get('sort') || '';
   const productGridRef = useRef(null);
 
@@ -117,9 +117,10 @@ export default function Shop() {
     );
   }
 
-  if (genderParam) {
+  if (genderParams.length > 0) {
+    // Unisex pieces belong in every gender view.
     filteredProducts = filteredProducts.filter(
-      (p) => p.gender === genderParam || p.gender === 'unisex'
+      (p) => genderParams.includes(p.gender) || p.gender === 'unisex'
     );
   }
 
@@ -129,8 +130,8 @@ export default function Shop() {
     );
   }
 
-  if (sizeParam) {
-    filteredProducts = filteredProducts.filter((p) => normaliseSize(p.tagSize) === sizeParam);
+  if (sizeParams.length > 0) {
+    filteredProducts = filteredProducts.filter((p) => sizeParams.includes(normaliseSize(p.tagSize)));
   }
 
   if (queryParam) {
@@ -156,8 +157,8 @@ export default function Shop() {
     });
   }
 
-  const hasActiveFilter = categoryParams.length > 0 || genderParam || badgeParams.length > 0
-    || !!sizeParam || !!queryParam;
+  const hasActiveFilter = categoryParams.length > 0 || genderParams.length > 0 || badgeParams.length > 0
+    || sizeParams.length > 0 || !!queryParam;
   const availableCount = products.filter((p) => p.status !== 'sold_out').length;
   const shownAvailable = filteredProducts.filter((p) => p.status !== 'sold_out').length;
   const shownSold = filteredProducts.length - shownAvailable;
@@ -167,7 +168,8 @@ export default function Shop() {
   // combination of filters is a near-duplicate of /shop and points its canonical
   // back there, so the variants don't compete with each other in the index.
   const isSingleCategoryView =
-    categoryParams.length === 1 && !genderParam && badgeParams.length === 0 && !sizeParam && !queryParam;
+    categoryParams.length === 1 && genderParams.length === 0 && badgeParams.length === 0
+    && sizeParams.length === 0 && !queryParam;
 
   const soleCategoryName = isSingleCategoryView
     ? categories.find((c) => c.slug?.current === categoryParams[0])?.name ||
@@ -188,8 +190,8 @@ export default function Shop() {
 
   // Format active filter labels
   const activeFilterParts = [];
-  if (genderParam) {
-    activeFilterParts.push(genderParam.charAt(0).toUpperCase() + genderParam.slice(1));
+  if (genderParams.length > 0) {
+    activeFilterParts.push(genderParams.map((g) => g.charAt(0).toUpperCase() + g.slice(1)).join(', '));
   }
   if (categoryParams.length > 0) {
     const categoryNames = categoryParams.map(slug => {
@@ -201,13 +203,14 @@ export default function Shop() {
   if (badgeParams.length > 0) {
     activeFilterParts.push(badgeParams.join(', '));
   }
-  if (sizeParam) activeFilterParts.push(`Size ${sizeParam}`);
+  if (sizeParams.length > 0) activeFilterParts.push(`Size ${sizeParams.join(', ')}`);
   if (queryParam) activeFilterParts.push(`“${queryParam}”`);
   const displayFilterName = activeFilterParts.join(' · ');
 
   // Smooth scroll to product grid when filter changes
   const categoryKey = categoryParams.join(',');
   const badgeKey = badgeParams.join(',');
+  const genderKey = genderParams.join(',');
   const skipFilterScrollRef = useRef(true);
   useEffect(() => {
     // Skip the first run: on mount we're either arriving fresh (already at top)
@@ -224,7 +227,7 @@ export default function Shop() {
       return () => clearTimeout(t);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categoryKey, genderParam, badgeKey]);
+  }, [categoryKey, genderKey, badgeKey]);
 
   return (
     <main>
